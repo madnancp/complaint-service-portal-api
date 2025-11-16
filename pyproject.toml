@@ -1,7 +1,7 @@
 [project]
 name = "complaint-service-portal-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "NLP & LLM based backend"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
