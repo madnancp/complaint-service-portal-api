@@ -18,5 +18,6 @@ dependencies = [
 dev = [
     "jupyter>=1.1.1",
     "matplotlib>=3.10.7",
+    "nltk>=3.9.2",
     "notebook>=7.4.7",
 ]
