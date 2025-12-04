@@ -1,5 +1,5 @@
 from langchain_community.chat_models import ChatLlamaCpp
-from langchain.prompt import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from src.config.settings import settings
 
 
