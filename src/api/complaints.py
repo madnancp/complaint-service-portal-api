@@ -9,8 +9,21 @@ router = APIRouter()
 
 
 @router.get("/complaints", response_model=list[ComplaintSchema])
-async def get_complaints(db=Depends(get_session)):
+async def get_all_complaints(db=Depends(get_session)):
     complaints = db.query(Complaint).all()
+    return complaints
+
+
+@router.get("/complaints/{uuid}", response_model=ComplaintSchema)
+async def get_complaint(uuid: str, db=Depends(get_session)):
+    complaints = db.query(Complaint).filter(Complaint.uuid == uuid).first()
+
+    if not complaints:
+        raise HTTPException(
+            detail="No Complaint found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
     return complaints
 
 
