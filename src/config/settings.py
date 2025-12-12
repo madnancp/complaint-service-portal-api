@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.1
     LLM_REPENALTY: float = 1.1
     LLM_N_THREADS: int = 3  # no.of cores - 1
-    LLM_MAX_TOKENS: int = 2000
-    LLM_N_CTX: int = 2048
+    LLM_MAX_TOKENS: int = 256
+    LLM_N_CTX: int = 1024
 
     class Config:
         env_file = ".env"

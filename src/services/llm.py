@@ -8,6 +8,11 @@ from src.schemas.llm import ComplaintAnalysis
 
 class LLMInferenceService:
     def __init__(self):
+        print("[INFO] Initializing LLM inference service...")
+
+        print(
+            f"[INFO] Loading LlamaCPP model from {settings.MODEL_PATH / settings.LLM_MODEL_FILE_NAME}"
+        )
         self.llm = ChatLlamaCpp(
             model_path=str(settings.MODEL_PATH / settings.LLM_MODEL_FILE_NAME),
             streaming=False,
@@ -21,21 +26,36 @@ class LLMInferenceService:
             n_ctx=settings.LLM_N_CTX,
         )
 
+        print("[INFO] Initializing Pydantic parser...")
         self.parser = PydanticOutputParser(pydantic_object=ComplaintAnalysis)
 
+        print("[INFO] Setting up prompt template...")
         self.prompt = self._setup_chat_template()
+
+        print("[INFO] LLM inference service initialized.")
 
     def inference(self, query: str) -> ComplaintAnalysis:
         """Run inference and return parsed JSON."""
+        print(f"[INFO] Starting inference for: {query}")
         chain = self.prompt | self.llm | StrOutputParser()
 
+        print("[INFO] Invoking chain with user input")
         raw_output = chain.invoke({"complaint": query})
 
-        try:
-            return self.parser.parse(raw_output)
+        print(f"[INFO] Raw LLM Outpu received : {raw_output}")
 
-        except Exception:
-            # Retry with JSON correction prompt
+        try:
+            print("Attempting to parse output into ComplaintAnalysis schema...")
+            parsed = self.parser.parse(raw_output)
+            print("Parsing successful. Returning structured response.")
+
+            return parsed
+
+        except Exception as e:
+            print(
+                "Initial parsing failed. Attempting JSON correction... Error: %s",
+                str(e),
+            )
             fix_prompt = f"""
             The following model output is invalid JSON. 
             Fix ONLY the JSON content and return valid JSON.
@@ -45,13 +65,22 @@ class LLMInferenceService:
 
             Return corrected JSON ONLY.
             """
+            print("Sending correction prompt to LLM...")
             fixed_output = self.llm.invoke(fix_prompt).content
-            return self.parser.parse(fixed_output)
+            print(f"Corrected LLM output: {fixed_output}")
+
+            parsed = self.parser.parse(fixed_output)
+            print("JSON correction successful. Returning parsed output.")
+
+            return parsed
 
     def _setup_chat_template(self) -> ChatPromptTemplate:
         """Create structured prompt with instructions + parser format."""
+
+        print("Generating format instructions for prompt...")
         format_instructions = self.parser.get_format_instructions()
 
+        print("Creating structured system/user messages for the prompt...")
         system_message = """
             You are an AI assistant for a complaint processing system.
             Your task is to analyze a user complaint and extract the required structured fields:
@@ -78,6 +107,7 @@ class LLMInferenceService:
             {format_instructions}
             """
 
+        print("Prompt template created successfully.")
         return ChatPromptTemplate.from_messages(
             [
                 ("system", system_message),

@@ -3,10 +3,19 @@ from datetime import datetime
 from pydantic import BaseModel, UUID4, ConfigDict
 
 
+class ComplaintStatus(str, Enum):
+    SUCCESS = "success"
+    PENDING = "pending"
+    PROCESSING = "processing"
+    FAILED = "failed"
+    UNKNOWN = "unknown"
+
+
 class Complaint(BaseModel):
     id: int
     uuid: UUID4
     message: str
+    status: ComplaintStatus
     created_at: datetime
     updated_at: datetime
 
@@ -15,11 +24,3 @@ class Complaint(BaseModel):
 
 class ComplaintCreate(BaseModel):
     message: str
-
-
-class ComplaintStatus(str, Enum):
-    SUCCESS = "success"
-    PENDING = "pending"
-    PROCESSING = "processing"
-    FAILED = "failed"
-    UNKNOWN = "unknown"
