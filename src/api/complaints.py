@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
 from src.schemas.complaint import ComplaintCreate, Complaint as ComplaintSchema
-from src.db.base import get_session
+from src.dependencies import get_session, get_llm_service
 from src.db.models import Complaint
 from src.utils import get_checksum
+from src.tasks.inference import run_llm_inference
 
 
 router = APIRouter()
@@ -30,7 +31,12 @@ async def get_complaint(uuid: str, db=Depends(get_session)):
 @router.post(
     "/complaints", response_model=ComplaintSchema, status_code=status.HTTP_201_CREATED
 )
-async def add_complaint(request: ComplaintCreate, db=Depends(get_session)):
+async def add_complaint(
+    request: ComplaintCreate,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_session),
+    llm_service=Depends(get_llm_service),
+):
     """create new complaint (add complaint to db)"""
     checksum = get_checksum(request.message)
     is_existing = db.query(Complaint).filter(Complaint.checksum == checksum).first()
@@ -44,6 +50,13 @@ async def add_complaint(request: ComplaintCreate, db=Depends(get_session)):
     db.add(db_complaint)
     db.commit()
     db.refresh(db_complaint)
+
+    print("data has been created and bg task is added")
+    background_tasks.add_task(
+        run_llm_inference,
+        db_complaint.id,
+        llm_service,
+    )
 
     return db_complaint
 

@@ -1,3 +1,4 @@
+from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, UUID4, ConfigDict
 
@@ -14,3 +15,11 @@ class Complaint(BaseModel):
 
 class ComplaintCreate(BaseModel):
     message: str
+
+
+class ComplaintStatus(str, Enum):
+    SUCCESS = "success"
+    PENDING = "pending"
+    PROCESSING = "processing"
+    FAILED = "failed"
+    UNKNOWN = "unknown"
